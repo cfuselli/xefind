@@ -70,8 +70,12 @@ With this option you can also specify the `--save_runs` to save the runlist in a
 
 ### Extra options
 
+#### Extra location
 By default the output will be printed giving you the availability in the usual dali and midway user disks.
 If you want to check a special rucio RSE where the data is stored, you can specify it with the `--extra_location` option.
+
+#### Livetime
+It is possible to specify --livetime to visualise the results in term of livetime instead of number of runs.
 
 
 ## Output

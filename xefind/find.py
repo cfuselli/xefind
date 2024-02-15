@@ -155,7 +155,24 @@ def read_run_ids_from_file(filename):
         run_ids = file.read().splitlines()
     return [int(run_id) for run_id in run_ids if run_id.isdigit()]
 
-def check_runs_available(data_type, run_ids, extra_location=''):
+def get_livetime_from_runids(run_ids):
+    """
+    Get the livetime for a list of run IDs.
+
+    Args:
+        run_ids (list): A list of run IDs to get the livetime for.
+
+    Returns:
+        float: The total livetime in days.
+    """
+    runs = xent_collection(collection="runs")
+    query = {'number': {'$in': run_ids}}
+    projection = {'start': 1, 'end': 1}
+    res = runs.find(query, projection)
+    livetime = sum([(doc['end'] - doc['start']).total_seconds() for doc in res])
+    return livetime / (60 * 60 * 24) # convert to days
+
+def check_runs_available(data_type, run_ids, extra_location='', livetime=False):
     """
     Check the availability of runs in the database for a given data type and run IDs.
 
@@ -189,18 +206,29 @@ def check_runs_available(data_type, run_ids, extra_location=''):
         # remove _version from the versions
         versions = {k.split('_')[0]: v for k, v in versions.items()}
 
+        total = len(run_ids)
+        if livetime:
+            total = get_livetime_from_runids(run_ids)
+    
         if lineage_hash:
             doc = {
                 'Context': context,
                 'Environment': env_version,
-                'Total': len(run_ids),
                 'LineageHash': lineage_hash,
                 **versions
             }
+
+            doc['Total'] = f"{total}" if not livetime else f"{total:.1f}d"
         
             for location in locations:
+
                 runs_location = get_runs_from_db(run_ids, data_type, lineage_hash, location)
-                doc[location] = f"{len(runs_location)} ({len(runs_location) / len(run_ids) * 100:.1f}%)"
+                found = len(runs_location)
+                if livetime:
+                    found = get_livetime_from_runids(runs_location)
+
+                doc[location] = f"{found}" if not livetime else f"{found:.1f}d"
+                doc[location] += f" ({found / total * 100:.1f}%)"
 
             docs.append(doc)
 
@@ -208,6 +236,9 @@ def check_runs_available(data_type, run_ids, extra_location=''):
             print(f"Lineage hash not found for {context} and {env_version}")
     
     df = pd.DataFrame(docs)
+    
+    print(df.to_string(index=False), "\n")
+
     return df
 
 def get_runs_from_db(run_ids, data_type, lineage_hash, location=None):
@@ -272,6 +303,7 @@ def parse_args():
 
     parser.add_argument('--extra_location', type=str, default=None, help="Add extra location on top of UC_DALI_USERDISK and UC_MIDWAY_USERDISK")
     parser.add_argument('--save_runs', action='store_true', help="Save the run_ids to a file, only works with --source and --science_run")
+    parser.add_argument('--livetime', action='store_true', help="Get the livetime instead of the number of runs")
 
     return parser.parse_args()
 
@@ -282,6 +314,7 @@ if __name__ == "__main__":
 
     data_type = args.data_type
     extra_location = args.extra_location
+    livetime = args.livetime if args.livetime else False
 
     print("\n", "-"*80)
 
@@ -289,8 +322,7 @@ if __name__ == "__main__":
     if args.filename:
         print(f" Checking for {data_type.upper()} from file: {args.filename}\n")
         run_ids = read_run_ids_from_file(args.filename)
-        df = check_runs_available(data_type, run_ids, extra_location)
-        print(df.to_string(index=False), "\n")
+        df = check_runs_available(data_type, run_ids, extra_location, livetime)
 
     # Check for data_type with given source and science run
     elif args.source:
@@ -298,7 +330,7 @@ if __name__ == "__main__":
             for source in args.source:
                 print(f" Checking for {data_type.upper()} in {science_run.upper()} with source: {source.upper()}\n")
                 run_ids = get_runs_from_source(science_run, source)
-                
+
                 if args.save_runs:
                     # get directory of this file
                     out_folder = os.path.dirname(os.path.abspath(__file__))
@@ -308,15 +340,13 @@ if __name__ == "__main__":
                     with open(out_filename, 'w') as file:
                         file.write("\n".join(map(str, run_ids)))
 
-                df = check_runs_available(data_type, run_ids, extra_location)
-                print(df.to_string(index=False), "\n")
+                df = check_runs_available(data_type, run_ids, extra_location, livetime)
 
     # Check for data_type with given run_id
     elif args.run_id:
         print(f" Checking for {data_type.upper()} for run_id: {args.run_id}\n")
         run_ids = [int(args.run_id)]
-        df = check_runs_available(data_type, run_ids, extra_location)
-        print(df.to_string(index=False), "\n")
+        df = check_runs_available(data_type, run_ids, extra_location, livetime)
 
     else:
         raise ValueError("No source, filename, or run_id provided")
