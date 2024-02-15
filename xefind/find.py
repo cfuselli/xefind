@@ -7,6 +7,7 @@ import argparse
 # These are the recommended combinations 
 # of context and environment
 RECOMMENDED = {
+    'xenonnt_online': '2024.01.1', # we need to specify the versions in ENV_VERSIONS
     'xenonnt_v14': '2024.01.1',
     'xenonnt_v13': '2023.11.1',
     'xenonnt_v12': '2023.10.1',
@@ -17,6 +18,11 @@ RECOMMENDED = {
 # These env versions are only needed if the environment 
 # was not updated to the contexts collection
 ENV_VERSIONS = {
+    'xenonnt_online': {
+        'straxen_version': '2.1.6',
+        'strax_version': '1.5.5',
+        'cutax_version': '0.0.0' # no cutax for online
+    },
     'xenonnt_v14': {
         'straxen_version': '2.2.0',
         'strax_version': '1.6.0',
@@ -53,7 +59,9 @@ SCIENCE_RUNS = {
                 {'source': 'th-232', 'start': {'$lte': datetime(2022, 8, 1)}},
             ]},
     'sr0_ted': {'tags.name': '_sr0_ted'},
-    'sr1': {'tags.name': '_sr1_preliminary'},
+    'sr1': {'tags.name': {'$in': ['_sr1', '_sr1_preliminary']}},
+    'sr2': {'tags.name': {'$in': ['_sr2', '_sr2_preliminary']}},
+    'all': {'start': {'$gte': datetime(2022, 1, 1)}}
 }
 
 
@@ -83,10 +91,15 @@ def get_runs_from_source(science_run, source):
     Returns:
         list: A list of run numbers matching the given science run and source.
     """
+
     query = SCIENCE_RUNS[science_run]
     query['source'] = source
+    # end is lt now in GMT time
+    query['end'] = {"$exists": True, "$lt": datetime.utcnow()}
     projection = {'number': 1}
+
     runlist = find(query, projection)
+
     return [doc['number'] for doc in runlist]
 
 def get_lineage_hash(context, environment, data_type):
@@ -113,7 +126,7 @@ def get_lineage_hash(context, environment, data_type):
     versions = {k: res.get(k, 'UNKNOWN') for k in ['straxen_version', 'strax_version', 'cutax_version']}
     return lineage_hash, versions
 
-def get_lineae_hash_from_version(context, versions):
+def get_lineage_hash_from_version(context, versions):
     """
     Retrieves the lineae hash from the specified version and context.
 
@@ -125,6 +138,13 @@ def get_lineae_hash_from_version(context, versions):
         str or None: The lineae hash if found, None otherwise.
     """
     ctxs = xent_collection(collection="contexts")
+    
+
+    if context == 'xenonnt_online':
+        # remove cutax_version from the versions
+        versions = versions.copy()
+        versions.pop('cutax_version', None)
+
     query = {**versions, 'name': context}
     projection = {f'hashes.{data_type}': 1}
     res = ctxs.find_one(query, projection)
@@ -166,10 +186,13 @@ def get_livetime_from_runids(run_ids):
         float: The total livetime in days.
     """
     runs = xent_collection(collection="runs")
+    run_ids = run_ids.copy()
+    run_ids = [int(run_id) for run_id in run_ids]
     query = {'number': {'$in': run_ids}}
-    projection = {'start': 1, 'end': 1}
+    projection = {'number': 1, 'start': 1, 'end': 1}
     res = runs.find(query, projection)
     livetime = sum([(doc['end'] - doc['start']).total_seconds() for doc in res])
+
     return livetime / (60 * 60 * 24) # convert to days
 
 def check_runs_available(data_type, run_ids, extra_location='', livetime=False):
@@ -197,7 +220,7 @@ def check_runs_available(data_type, run_ids, extra_location='', livetime=False):
         lineage_hash, versions = get_lineage_hash(context, env_version, data_type)
         if not lineage_hash:
             versions = ENV_VERSIONS[context]
-            lineage_hash = get_lineae_hash_from_version(context, versions)
+            lineage_hash = get_lineage_hash_from_version(context, versions)
 
         locations = LOCATIONS
         if extra_location:
@@ -228,7 +251,7 @@ def check_runs_available(data_type, run_ids, extra_location='', livetime=False):
                     found = get_livetime_from_runids(runs_location)
 
                 doc[location] = f"{found}" if not livetime else f"{found:.1f}d"
-                doc[location] += f" ({found / total * 100:.1f}%)"
+                doc[location] += f" ({found / total * 100:.1f}%)" if total > 0 else " (0%)"
 
             docs.append(doc)
 
