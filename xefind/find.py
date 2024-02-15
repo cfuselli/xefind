@@ -259,14 +259,18 @@ def parse_args():
         Example from file: python find_available.py peaklets --filename /path/to/runs.txt
         """
     )
+    # First argument is the data type
     parser.add_argument('data_type', type=str, help="The data type to check (e.g. peaklets, event_info, etc)")
     
+    # Add mutually exclusive group for source, filename, and run_id
     source_group = parser.add_mutually_exclusive_group(required=True)
     source_group.add_argument('--source', type=str, nargs='+', help="The source(s) to check (e.g. none, th-232, etc)")
     source_group.add_argument('--filename', type=str, help="The file with the run_ids to check")
     source_group.add_argument('--run_id', type=str, help="The single run_id to check")
     
+    # if source is provided, then science_run is required
     parser.add_argument('--science_run', type=str, nargs='+', help="The science run(s) to check (e.g. sr0, sr1, sr)", choices=SCIENCE_RUNS.keys(), default=['sr0', 'sr1'])
+
     parser.add_argument('--extra_location', type=str, default=None, help="Add extra location on top of UC_DALI_USERDISK and UC_MIDWAY_USERDISK")
     return parser.parse_args()
 
