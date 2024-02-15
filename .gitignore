@@ -1,6 +1,6 @@
 # Ignore all files in runlists except for the runlist_example.txt file
-runlists/*
-!runlists/runlist_example.txt
+xefind/runlists/*
+!xefind/runlists/runlist_example.txt
 
 #########################
 #### Standard Python ####
