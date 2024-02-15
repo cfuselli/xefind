@@ -193,7 +193,7 @@ def check_runs_available(data_type, run_ids, extra_location=''):
             doc = {
                 'Context': context,
                 'Environment': env_version,
-                'Total Checked': len(run_ids),
+                'Total': len(run_ids),
                 'LineageHash': lineage_hash,
                 **versions
             }
@@ -261,7 +261,6 @@ def parse_args():
     )
     # First argument is the data type
     parser.add_argument('data_type', type=str, help="The data type to check (e.g. peaklets, event_info, etc)")
-    
     # Add mutually exclusive group for source, filename, and run_id
     source_group = parser.add_mutually_exclusive_group(required=True)
     source_group.add_argument('--source', type=str, nargs='+', help="The source(s) to check (e.g. none, th-232, etc)")
@@ -272,6 +271,8 @@ def parse_args():
     parser.add_argument('--science_run', type=str, nargs='+', help="The science run(s) to check (e.g. sr0, sr1, sr)", choices=SCIENCE_RUNS.keys(), default=['sr0', 'sr1'])
 
     parser.add_argument('--extra_location', type=str, default=None, help="Add extra location on top of UC_DALI_USERDISK and UC_MIDWAY_USERDISK")
+    parser.add_argument('--save_runs', action='store_true', help="Save the run_ids to a file, only works with --source and --science_run")
+
     return parser.parse_args()
 
 
@@ -297,6 +298,16 @@ if __name__ == "__main__":
             for source in args.source:
                 print(f" Checking for {data_type.upper()} in {science_run.upper()} with source: {source.upper()}\n")
                 run_ids = get_runs_from_source(science_run, source)
+                
+                if args.save_runs:
+                    # get directory of this file
+                    out_folder = os.path.dirname(os.path.abspath(__file__))
+                    out_folder = os.path.join(out_folder, 'runlists')
+                    os.makedirs(out_folder, exist_ok=True)
+                    out_filename = os.path.join(out_folder,f"{science_run}_{source}.txt")
+                    with open(out_filename, 'w') as file:
+                        file.write("\n".join(map(str, run_ids)))
+
                 df = check_runs_available(data_type, run_ids, extra_location)
                 print(df.to_string(index=False), "\n")
 
