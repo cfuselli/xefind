@@ -42,7 +42,8 @@ ENV_VERSIONS = {
 # These are the locations for the users
 LOCATIONS = [
     'UC_DALI_USERDISK',
-    'UC_MIDWAY_USERDISK'
+    'UC_MIDWAY_USERDISK',
+    'ALL_LOCATIONS'
 ]
 
 SCIENCE_RUNS = {
@@ -234,7 +235,7 @@ def get_runs_from_db(run_ids, data_type, lineage_hash, location=None):
         }
     }
 
-    if location:
+    if location and location != 'ALL_LOCATIONS':
         query['data']['$elemMatch']['location'] = location
 
     res = list(coll.find(query, {'number': 1}))
