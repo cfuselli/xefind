@@ -7,6 +7,8 @@ A package to answer all your questions on how and where to find data for the XEN
 - Got a list of runs and want to find the availability in every context and environment?
 - Want to easily find out which runs are in the latest context for a given source and science run?
 - You just have a run_id and want to know everything about it?
+- Want to check all the combinations of environments and contexts, and the relative strax, straxen and cutax versions? 
+- You are just curious about lineage changes in different environments? 
 
 This package is for you!
 
@@ -15,16 +17,18 @@ This package is for you!
 To install this package, navigate to the root directory of the package and run:
 
 ```bash
-pip install -e .
+pip3 install .
 ```
 
 This will install the package and its dependencies.
 
 ## Usage
 
+The only thing you need to run this is the credentials to access the database, which are stored for you autoamtically on midway and dali and that utilix will source for you. 
+
 Here's an example of how to use the find function in this package:
 
-### Single run_id
+### From single run_id
 
 To get info on a single run id, run:
 
@@ -42,7 +46,7 @@ Then run:
 python3 find.py peak_basics --filename runlist_example.txt
 ```
 
-### Define science run and source
+### From science_run and source
 
 You can also define a science run and source. The run_ids will be queried from the database. 
 Try running:

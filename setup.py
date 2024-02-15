@@ -9,7 +9,6 @@ setup(
     install_requires=[
         'utilix',
         'pandas',
-        'os',
         'argparse'
     ],
     license='MIT',
