@@ -17,7 +17,8 @@ This package is for you!
 To install this package, navigate to the root directory of the package and run:
 
 ```bash
-pip3 install .
+cd xedata
+pip3 install . --user
 ```
 
 This will install the package and its dependencies.
