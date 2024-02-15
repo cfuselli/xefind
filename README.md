@@ -44,7 +44,7 @@ Each run_id should be on a new line.
 Then run:
 
 ```bash
-python3 find.py peak_basics --filename runlist_example.txt
+python3 find.py peak_basics --filename runlists/runlist_example.txt
 ```
 
 ### From science_run and source
@@ -65,6 +65,8 @@ python3 find.py event_info --science_run sr0 sr1 --source rn-220 none
 ```
 
 this will give you the result for all combinations of science runs and sources.
+
+With this option you can also specify the `--save_runs` to save the runlist in a file, following the naming from the science run and source, in the /runlists folder.
 
 ### Extra options
 
