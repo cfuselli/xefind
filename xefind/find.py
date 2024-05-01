@@ -150,7 +150,8 @@ def get_lineage_hash_from_version(context, versions):
     res = ctxs.find_one(query, projection)
     if not res:
         return None
-    return res['hashes'][data_type]
+
+    return res['hashes'].get(data_type, None)
 
 
 def read_run_ids_from_file(filename):
@@ -219,7 +220,10 @@ def check_runs_available(data_type, run_ids, extra_location='', livetime=False):
     for context, env_version in RECOMMENDED.items():
         lineage_hash, versions = get_lineage_hash(context, env_version, data_type)
         if not lineage_hash:
-            versions = ENV_VERSIONS[context]
+            versions = ENV_VERSIONS.get(context, None)
+            if not versions:
+                print(f"Versions not found for {context} and {env_version}")
+                continue
             lineage_hash = get_lineage_hash_from_version(context, versions)
 
         locations = LOCATIONS
