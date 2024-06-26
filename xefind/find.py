@@ -59,7 +59,7 @@ SCIENCE_RUNS = {
                 {'source': 'th-232', 'start': {'$lte': datetime(2022, 8, 1)}},
             ]},
     'sr0_ted': {'tags.name': '_sr0_ted'},
-    'sr1': {'tags.name': {'$in': ['_sr1', '_sr1_preliminary']}},
+    'sr1': {'tags.name': {'$in': ['_sr1', '_sr1_preliminary', '_sr1a', '_sr1b']}},
     'sr2': {'tags.name': {'$in': ['_sr2', '_sr2_preliminary']}},
     'all': {'start': {'$gte': datetime(2022, 1, 1)}}
 }
