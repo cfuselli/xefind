@@ -8,7 +8,8 @@ import argparse
 # of context and environment
 RECOMMENDED = {
     'xenonnt_online': '2024.01.1', # we need to specify the versions in ENV_VERSIONS
-    'xenonnt_v14': '2024.01.1',
+    'xenonnt_v15': '2024.05.2',
+    'xenonnt_v14': '2024.04.1',
     'xenonnt_v13': '2023.11.1',
     'xenonnt_v12': '2023.10.1',
     'xenonnt_v11': '2023.07.1',
@@ -22,6 +23,11 @@ ENV_VERSIONS = {
         'straxen_version': '2.1.6',
         'strax_version': '1.5.5',
         'cutax_version': '0.0.0' # no cutax for online
+    },
+    'xenonnt_v15': {
+        'straxen_version': '2.2.4',
+        'strax_version': '1.6.5',
+        'cutax_version': '1.18.4'
     },
     'xenonnt_v14': {
         'straxen_version': '2.2.0',
